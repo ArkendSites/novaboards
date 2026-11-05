@@ -1,0 +1,123 @@
+{
+  "boards": [
+    {
+      "id": "classic",
+      "tab_label": "Daily Cruiser",
+      "category": "Daily Commuter",
+      "name": "The Classic",
+      "description": "A balanced maple-and-carbon deck tuned for quiet commutes, easy carving and all-day comfort around town.",
+      "top_speed_mph": 22,
+      "range_miles": 18,
+      "motors": "3000W Dual Motors",
+      "price": 999.99,
+      "rating": 5.0,
+      "badge": "",
+      "featured": false,
+      "card_photo": "",
+      "showcase_photo": ""
+    },
+    {
+      "id": "surfin",
+      "tab_label": "Sheer Speed",
+      "category": "Sheer Speed",
+      "name": "The Surfin’",
+      "description": "An ultra-aerodynamic deck and high-performance wheels let The Surfin’ slice through streets like a shark in water.",
+      "top_speed_mph": 38,
+      "range_miles": 28,
+      "motors": "6000W Dual Motors",
+      "price": 1499.99,
+      "rating": 4.9,
+      "badge": "Overall Pick",
+      "featured": true,
+      "card_photo": "",
+      "showcase_photo": "images/surfin-1800.webp"
+    },
+    {
+      "id": "rugged",
+      "tab_label": "Off-Road",
+      "category": "Off-Roader",
+      "name": "The Rugged",
+      "description": "Pneumatic all-terrain tires and a reinforced carbon frame take you from pavement to dirt trails without missing a beat.",
+      "top_speed_mph": 28,
+      "range_miles": 22,
+      "motors": "5000W All-Terrain Motors",
+      "price": 1799.99,
+      "rating": 4.7,
+      "badge": "New",
+      "featured": false,
+      "card_photo": "",
+      "showcase_photo": ""
+    }
+  ],
+  "reviews": [
+    {
+      "name": "Danny C.",
+      "board": "The Rugged",
+      "date": "2026-03-20",
+      "stars": 5,
+      "text": "Sick board, excellent for hitting trails. The custom print came out perfectly. I highly recommend NovaBoards."
+    },
+    {
+      "name": "Jennifer T.",
+      "board": "The Classic",
+      "date": "2026-05-20",
+      "stars": 5,
+      "text": "Bought this for my 16 y/o son. He uses it all the time and loves the balance and responsiveness of the board."
+    },
+    {
+      "name": "Marcus L.",
+      "board": "The Surfin’",
+      "date": "2026-04-02",
+      "stars": 5,
+      "text": "Hit 37 on a closed stretch and it felt planted the whole time. Braking is buttery."
+    },
+    {
+      "name": "Priya S.",
+      "board": "The Classic",
+      "date": "2026-04-28",
+      "stars": 5,
+      "text": "My commute went from 25 minutes to 11. Quiet enough that nobody notices me rolling in."
+    },
+    {
+      "name": "Tom R.",
+      "board": "The Rugged",
+      "date": "2026-05-11",
+      "stars": 5,
+      "text": "Took it up the Canfield trails. Ate gravel and roots without complaint."
+    },
+    {
+      "name": "Alexis W.",
+      "board": "The Surfin’",
+      "date": "2026-06-03",
+      "stars": 5,
+      "text": "The custom print matched my mockup exactly. The shop crew walked me through everything."
+    }
+  ],
+  "gallery": [
+    {
+      "image": "images/hero-800.webp",
+      "alt": "Rider mid-trick in a town square at sunset"
+    },
+    {
+      "image": "images/surfin-1200.webp",
+      "alt": "The Surfin’ in a neon-lit tunnel"
+    },
+    {
+      "image": "images/workshop.webp",
+      "alt": "Builder shaping a deck in the workshop"
+    },
+    {
+      "image": "images/forge.webp",
+      "alt": "Sparks flying at the forge"
+    },
+    {
+      "image": "images/machinery.webp",
+      "alt": "Close-up of drivetrain machinery"
+    }
+  ],
+  "contact": {
+    "email": "questions@novaboards.com",
+    "phone": "+1 (555) 555-5555",
+    "address": "8793 W Pembrook Street, Coeur d’Alene ID"
+  }
+}
