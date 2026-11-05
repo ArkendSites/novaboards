@@ -1,0 +1,57 @@
+# Pages CMS settings — tells the editor what can be changed and how.
+# Docs: https://pagescms.org/docs/configuration/
+
+media:
+  input: images          # where uploaded photos are saved in the repo
+  output: images         # how their paths are written into the content file
+  extensions: [jpg, jpeg, png, webp]
+
+content:
+  - name: site
+    label: NovaBoards content
+    type: file
+    path: content/site.json
+    fields:
+      - name: boards
+        label: Boards
+        type: object
+        list: true
+        fields:
+          - { name: id, label: "Board ID (short, lowercase, no spaces — best left as is)", type: string, required: true }
+          - { name: name, label: Board name, type: string, required: true }
+          - { name: tab_label, label: "Tab label (above the big board panel)", type: string }
+          - { name: category, label: Category, type: string }
+          - { name: description, label: Description, type: text }
+          - { name: top_speed_mph, label: Top speed (mph), type: number }
+          - { name: range_miles, label: Range (miles), type: number }
+          - { name: motors, label: Motors, type: string }
+          - { name: price, label: "Starting price ($)", type: number }
+          - { name: rating, label: "Rating (0–5)", type: number }
+          - { name: badge, label: "Badge (e.g. New, Overall Pick — leave empty for none)", type: string }
+          - { name: featured, label: "Featured (shown first and raised in the middle)", type: boolean }
+          - { name: card_photo, label: "Card photo (optional — replaces the drawn board)", type: image }
+          - { name: showcase_photo, label: "Big panel photo (optional, wide image)", type: image }
+      - name: reviews
+        label: Reviews (the first two show on the page)
+        type: object
+        list: true
+        fields:
+          - { name: name, label: Customer name, type: string, required: true }
+          - { name: board, label: Board purchased, type: string }
+          - { name: date, label: Purchase date, type: date }
+          - { name: stars, label: "Stars (1–5)", type: number }
+          - { name: text, label: Review, type: text }
+      - name: gallery
+        label: Gallery photos (up to 5)
+        type: object
+        list: true
+        fields:
+          - { name: image, label: Photo, type: image }
+          - { name: alt, label: "Description (for screen readers)", type: string }
+      - name: contact
+        label: Contact details
+        type: object
+        fields:
+          - { name: email, label: Email, type: string }
+          - { name: phone, label: Phone, type: string }
+          - { name: address, label: Address, type: string }
