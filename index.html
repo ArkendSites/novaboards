@@ -390,6 +390,46 @@ body{font-size:1.125rem}
 .ride[data-reveal]{transition:opacity var(--rv-d,.8s) cubic-bezier(.2,.7,.3,1), translate var(--rv-d,.8s) cubic-bezier(.2,.7,.3,1), scale .35s cubic-bezier(.2,.7,.3,1)}
 .ride[data-reveal="in"]{transition-delay:var(--rv-delay,0s), var(--rv-delay,0s), 0s}
 @media (hover: hover){ .ride:hover{scale:1.04; z-index:2} }
+/* Stacked (narrow) layout: the ride section pins in place and slides the cards sideways as you scroll */
+.pin-dots{display:none}
+.rides.pin{height:calc(100vh + var(--pin-steps,2) * 60vh); height:calc(100svh + var(--pin-steps,2) * 60svh); padding:0; overflow-x:clip}
+.rides.pin > .wrap{position:sticky; top:0; height:100vh; height:100svh; display:flex; flex-direction:column; justify-content:center; padding-top:calc(env(safe-area-inset-top,0px) + 60px); padding-bottom:20px}
+.rides.pin h2{margin-bottom:18px}
+.rides.pin .ride-grid{display:flex; align-items:center; gap:18px; width:max-content; max-width:none; margin:0; translate:var(--track-x,0px) 0; transition:translate .6s cubic-bezier(.2,.7,.3,1)}
+.rides.pin .ride-grid.no-anim{transition:none}
+.rides.pin .ride{flex:none; order:0; width:min(329px, 76vw); height:min(479px, calc(100svh - 190px)); min-height:0; opacity:.4 !important; scale:.9; translate:0 0 !important; transition:opacity .45s cubic-bezier(.2,.7,.3,1), scale .5s cubic-bezier(.2,.7,.3,1) !important; transition-delay:0s !important}
+.rides.pin .ride.is-active{opacity:1 !important; scale:1}
+.rides.pin .pin-dots{display:flex; justify-content:center; gap:8px; margin-top:16px}
+.pin-dots .pd{width:7px; height:7px; border-radius:50%; background:#c4c4c4; transition:background .3s, scale .3s}
+.pin-dots .pd.on{background:#111; scale:1.25}
+/* Narrow screens: keep the carousel compact */
+@media (max-width: 860px){
+  .showcase{min-height:0}
+  .showcase.has-photo .sc-copy{padding-top:min(24vw,160px)}
+  .sc-copy{padding-bottom:30px}
+  .sc-copy .cta{margin-bottom:20px}
+  .specs{display:flex; flex-wrap:wrap; gap:12px 22px}
+  .specs li{gap:8px; font-size:var(--fs-small)}
+  .specs svg{width:24px; height:24px}
+}
+@media (max-width: 520px){
+  .sc-copy .cta{flex-wrap:nowrap; gap:8px}
+  .sc-copy .cta .btn{padding:8px 14px; font-size:.92rem}
+  .specs{gap:10px 16px}
+  .specs li{font-size:.82rem; gap:6px}
+  .specs svg{width:20px; height:20px}
+}
+.btn{white-space:nowrap}
+@media (max-width: 380px){ .sc-copy .cta .btn{padding:8px 11px; font-size:.86rem} }
+@media (max-width: 345px){ .sc-copy .cta{flex-wrap:wrap} }
+@media (max-width: 360px){
+  .logo{font-size:1rem}
+  .nav ul{gap:12px}
+  .nav ul a{font-size:.8rem}
+  .tabs{gap:4px}
+  .tab{padding:6px 5px; font-size:.86rem}
+  .styles-head h2{font-size:1.15rem}
+}
 </style>
 </head>
 <body>
@@ -946,6 +986,53 @@ function startSite(C){
     near(gal, loadGallery);
     // Safety net: fetch everything once the page has settled anyway
     addEventListener("load", ()=>setTimeout(()=>{ loadCollage(); loadGallery(); }, 3000));
+  })();
+
+  // Narrow screens: pin the ride section and show one card at a time while scrolling through it
+  (function(){
+    const sec = document.querySelector(".rides"), grid = document.querySelector("#ride-grid");
+    if(!sec || !grid) return;
+    const cards = [...grid.querySelectorAll(".ride")];
+    const ordered = cards.slice();
+    const dots = document.createElement("div"); dots.className = "pin-dots"; dots.setAttribute("aria-hidden","true");
+    dots.innerHTML = ordered.map(()=>'<span class="pd"></span>').join("");
+    grid.after(dots);
+    const mq = matchMedia("(max-width: 860px)");
+    let on = false, idx = -1, ticking = false;
+    function center(){
+      if(!on || idx < 0) return;
+      const c = ordered[idx];
+      const x = innerWidth / 2 - (c.offsetLeft + c.offsetWidth / 2) - grid.parentElement.getBoundingClientRect().left - parseFloat(getComputedStyle(grid.parentElement).paddingLeft);
+      grid.style.setProperty("--track-x", x.toFixed(1) + "px");
+    }
+    function setIdx(i){
+      if(i === idx) return; idx = i;
+      ordered.forEach((c,k)=>{ c.classList.toggle("is-active", k===i); if(k===i) c.removeAttribute("inert"); else c.setAttribute("inert",""); });
+      dots.querySelectorAll(".pd").forEach((d,k)=>d.classList.toggle("on", k===i));
+      center();
+    }
+    function update(){
+      ticking = false; if(!on) return;
+      const top = sec.getBoundingClientRect().top + scrollY, range = Math.max(1, sec.offsetHeight - innerHeight);
+      const prog = Math.min(1, Math.max(0, (scrollY - top) / range));
+      setIdx(Math.min(ordered.length - 1, Math.floor(prog * ordered.length)));
+    }
+    function apply(){
+      // Only when the cards stack AND this page does its own scrolling (not when shown inside a stretched frame)
+      const want = mq.matches && ordered.length > 1 && document.documentElement.scrollHeight > innerHeight + 40;
+      if(want !== on){
+        on = want;
+        sec.style.setProperty("--pin-steps", ordered.length - 1);
+        sec.classList.toggle("pin", on);
+        if(!on){ ordered.forEach(c=>{ c.classList.remove("is-active"); c.removeAttribute("inert"); }); grid.style.removeProperty("--track-x"); idx = -1; }
+        else { grid.classList.add("no-anim"); update(); center(); requestAnimationFrame(()=>requestAnimationFrame(()=>grid.classList.remove("no-anim"))); }
+      } else if(on){ grid.classList.add("no-anim"); center(); requestAnimationFrame(()=>grid.classList.remove("no-anim")); }
+      update();
+    }
+    addEventListener("scroll", ()=>{ if(!ticking){ ticking = true; requestAnimationFrame(update); } }, {passive:true});
+    addEventListener("resize", apply);
+    mq.addEventListener ? mq.addEventListener("change", apply) : mq.addListener(apply);
+    apply();
   })();
 
   // Toast
