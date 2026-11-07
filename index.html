@@ -8,16 +8,14 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#131311">
-<link rel="preload" as="image" href="images/hero-800.webp" media="(max-width: 699px)">
-<link rel="preload" as="image" href="images/hero-1600.webp" media="(min-width: 700px)">
+<link rel="preload" as="image" href="images/hero-1600.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=MuseoModerno:ital,wght@0,400;0,600;0,700;1,800&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-@media (min-width: 700px){ :root{--img-hero:url("images/hero-1600.webp")} }
 @media (min-width: 1100px){ :root{--img-surfin:url("images/surfin-1800.webp")} }
 :root{
-  --img-hero:url("images/hero-800.webp");
+  --img-hero:url("images/hero-1600.webp");
   --img-surfin:url("images/surfin-1200.webp");
   --img-machine:url("images/machinery.webp");
   --img-forge:url("images/forge.webp");
@@ -447,7 +445,7 @@ body{font-size:1.125rem}
 .ride.featured{transform:translateY(-60px)}
 @media (max-width: 860px){ .ride.featured{transform:none} }
 .hero-bg{will-change:translate}
-.hero-bg{inset:-150px 0 0 0}
+.hero-bg{inset:-60px 0 0 0}
 .hero::after{content:""; position:absolute; left:0; right:0; bottom:0; height:22%; background:linear-gradient(180deg, transparent, var(--bg)); z-index:-1; pointer-events:none}
 @media (prefers-reduced-motion: reduce){ .showcase,.collage,.review,.reviews .g,.ride{transform:none} .ride.featured{transform:translateY(-60px)} .hero-bg{inset:0} }
 </style>
@@ -559,7 +557,7 @@ body{font-size:1.125rem}
       <div class="craft-grid">
         <div>
           <p class="eyebrow">Precision Crafted</p>
-          <h2 id="craft-h">A board is born from fire and focus</h2>
+          <h2 id="craft-h">A board is born from Fire and Focus</h2>
           <p>Every <b>NovaBoard</b> is hand-assembled and custom-woven with military-grade carbon fiber and premium maple.</p>
           <p>Born from late nights in the workshop and a relentless obsession with speed, our boards are built to handle maximum torque and deliver a flawless ride every single time.</p>
         </div>
@@ -653,7 +651,7 @@ body{font-size:1.125rem}
     </form>
     <div class="contact-info">
       <p class="eyebrow">We value our customers</p>
-      <h2>Got Questions?<br>We have answers.</h2>
+      <h2>Got Questions?<br>We have answers</h2>
       <p>If you have questions, feedback, or just want to say hi, shoot us a message or stop by our North Idaho location.</p>
       <ul class="cinfo">
         <li><svg viewBox="0 0 32 32" style="stroke:none" aria-hidden="true"><path d="M28 6H4C3.73478 6 3.48043 6.10536 3.29289 6.29289C3.10536 6.48043 3 6.73478 3 7V24C3 24.5304 3.21071 25.0391 3.58579 25.4142C3.96086 25.7893 4.46957 26 5 26H27C27.5304 26 28.0391 25.7893 28.4142 25.4142C28.7893 25.0391 29 24.5304 29 24V7C29 6.73478 28.8946 6.48043 28.7071 6.29289C28.5196 6.10536 28.2652 6 28 6ZM25.4287 8L16 16.6437L6.57125 8H25.4287ZM27 24H5V9.27375L15.3237 18.7375C15.5082 18.9069 15.7496 19.0008 16 19.0008C16.2504 19.0008 16.4918 18.9069 16.6763 18.7375L27 9.27375V24Z" fill="white"/></svg><a href="mailto:questions@novaboards.com">questions@novaboards.com</a></li>
@@ -1134,7 +1132,7 @@ function startSite(C){
       }
       // depth: hero photo drifts slower than the page; collage photos drift inside their wedges
       if(heroBg && y < heroEnd + 200){
-        const hy = Math.min(150, y * 0.28);
+        const hy = Math.min(60, y * 0.14);
         if(Math.abs(hy - lastHero) > 0.2){ lastHero = hy; heroBg.style.translate = `0 ${hy.toFixed(1)}px`; }
       }
       if(drift.length){
