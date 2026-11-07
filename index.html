@@ -117,6 +117,8 @@ a{color:inherit}
 .sc-photo::after{content:""; position:absolute; inset:0; background:linear-gradient(90deg, #050805 0%, rgba(5,8,5,.6) 14%, transparent 34%)}
 .showcase:not(.has-photo) .sc-photo{opacity:0}
 .showcase.has-photo .sc-art svg.board{opacity:0}
+.showcase.has-photo .sc-art{visibility:hidden}
+.showcase.has-photo .sc-art svg.board{animation:none !important}
 .showcase.has-photo::before{opacity:0}
 .showcase::before{content:""; position:absolute; inset:0; pointer-events:none; transition:opacity .35s;
   background:
@@ -440,6 +442,14 @@ body{font-size:1.125rem}
   .tab{padding:6px 5px; font-size:.86rem}
   .styles-head h2{font-size:1.15rem}
 }
+/* ---------- Smooth scroll speed effects (driven by --sk / --st from the scroll engine) ---------- */
+.showcase,.collage,.review,.reviews .g,.ride{transform-origin:50% 50%}
+.ride.featured{transform:translateY(-60px)}
+@media (max-width: 860px){ .ride.featured{transform:none} }
+.hero-bg{will-change:translate}
+.hero-bg{inset:-150px 0 0 0}
+.hero::after{content:""; position:absolute; left:0; right:0; bottom:0; height:22%; background:linear-gradient(180deg, transparent, var(--bg)); z-index:-1; pointer-events:none}
+@media (prefers-reduced-motion: reduce){ .showcase,.collage,.review,.reviews .g,.ride{transform:none} .ride.featured{transform:translateY(-60px)} .hero-bg{inset:0} }
 </style>
 </head>
 <body>
@@ -802,6 +812,7 @@ function startSite(C){
     const t = e.changedTouches[0], dx = t.clientX - swX, dy = t.clientY - swY; swX = null;
     if(Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4 && Date.now() - swT < 900) stepBoard(dx < 0 ? 1 : -1);
   }, {passive:true});
+  let lastKeyStep = 0;
   document.addEventListener("keydown", e=>{
     if(e.key!=="ArrowRight" && e.key!=="ArrowLeft") return;
     if(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -813,6 +824,8 @@ function startSite(C){
     const visible = r.bottom > 80 && r.top < innerHeight - 80;
     if(!inTabs && !visible) return;
     e.preventDefault();
+    // holding the key steps through boards at a steady pace instead of racing
+    const nowT = performance.now(); if(nowT - lastKeyStep < (e.repeat ? 650 : 280)) return; lastKeyStep = nowT;
     const i = order.indexOf(current) + (e.key==="ArrowRight"?1:-1);
     const k = order[(i+order.length)%order.length]; show(k, true, e.key==="ArrowRight" ? 1 : -1);
     if(inTabs) document.querySelector(`${t.closest(".dots") ? ".dot" : ".tab"}[data-board="${k}"]`).focus();
@@ -1055,6 +1068,118 @@ function startSite(C){
     addEventListener("resize", apply);
     mq.addEventListener ? mq.addEventListener("change", apply) : mq.addListener(apply);
     apply();
+  })();
+
+  // ---------- Smooth scrolling + speed effects ----------
+  // Wheels and trackpads set a target and the page glides to it (snappier for trackpads, which have their own momentum).
+  // Scroll speed drives the stretch (--sk / --st, set only on the elements that use it) and the depth effects.
+  (function(){
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const root = document.documentElement;
+    const hero = document.querySelector(".hero"), heroBg = document.querySelector(".hero-bg");
+    const collage = document.querySelector(".collage");
+    const stretchEls = [...document.querySelectorAll(".showcase, .collage, .review, .reviews .g, .ride")];
+    const wideMQ = matchMedia("(min-width: 861px)");
+    const drift = [];
+    if(collage){
+      collage.querySelectorAll("image[clip-path]").forEach(im=>{
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("clip-path", im.getAttribute("clip-path")); im.removeAttribute("clip-path");
+        im.parentNode.insertBefore(g, im); g.appendChild(im);
+        im.setAttribute("y", +im.getAttribute("y") - 50); im.setAttribute("height", +im.getAttribute("height") + 100);
+        drift.push(im);
+      });
+    }
+    // stop the elastic bounce at the top/bottom from fighting the glide
+    root.style.overscrollBehaviorY = "none"; document.body.style.overscrollBehaviorY = "none";
+    root.style.scrollBehavior = "auto";
+    // cached geometry (re-measured on resize) so frames never force a layout
+    let heroEnd = 0, colTop = 0, colH = 0, maxY = 0;
+    function measure(){
+      const sy = scrollY;
+      if(hero) heroEnd = hero.getBoundingClientRect().bottom + sy;
+      if(collage){ const r = collage.getBoundingClientRect(); colTop = r.top + sy - (parseFloat(collage.style.translate?.split(" ")[1]) || 0); colH = r.height; }
+      maxY = Math.max(0, root.scrollHeight - innerHeight);
+    }
+    measure();
+    let rt; const remeasure = ()=>{ clearTimeout(rt); rt = setTimeout(measure, 120); };
+    addEventListener("resize", remeasure);
+    if(document.fonts) document.fonts.ready.then(measure);
+    if(window.ResizeObserver) new ResizeObserver(remeasure).observe(document.querySelector("main"));
+
+    let target = scrollY, cur = scrollY, lastSet = scrollY, lastY = scrollY, sv = 0;
+    let gliding = false, running = false, lastT = 0, ease = 0.12, lastWheel = 0;
+    let lastSk = 0, lastSt = 1, lastHero = -1, lastD = 999;
+    const canGlide = () => root.scrollHeight > innerHeight + 40;   // this page scrolls itself
+    function frame(now){
+      const dt = lastT ? Math.min(64, now - lastT) : 16.7; lastT = now;
+      const k = dt / 16.7;
+      if(gliding){
+        cur += (target - cur) * (1 - Math.pow(1 - ease, k));
+        if(Math.abs(target - cur) < 0.35){ cur = target; gliding = false; }
+        lastSet = cur; window.scrollTo(0, cur);
+      }
+      const y = Math.max(0, scrollY), v = (y - lastY) / k; lastY = y;
+      sv += (v - sv) * (1 - Math.pow(1 - 0.18, k)); if(Math.abs(sv) < 0.03 && v === 0) sv = 0;
+      const sk = Math.max(-1.6, Math.min(1.6, sv * 0.045)), st = 1 + Math.min(0.03, Math.abs(sv) * 0.0009);
+      const atRest = Math.abs(sk) < 0.01 && st < 1.0005;
+      if(atRest && (lastSk !== 0 || lastSt !== 1)){
+        lastSk = 0; lastSt = 1;
+        for(const el of stretchEls) el.style.transform = "";        // back to crisp, untransformed edges
+      } else if(!atRest && (Math.abs(sk - lastSk) > 0.004 || Math.abs(st - lastSt) > 0.0003)){
+        lastSk = sk; lastSt = st;
+        // set transform directly (not an inherited variable) so only these elements restyle, not everything inside them
+        const tf = `skewY(${sk.toFixed(3)}deg) scaleY(${st.toFixed(4)})`, wide = wideMQ.matches;
+        for(const el of stretchEls) el.style.transform = (wide && el.classList.contains("featured") ? "translateY(-60px) " : "") + tf;
+      }
+      // depth: hero photo drifts slower than the page; collage photos drift inside their wedges
+      if(heroBg && y < heroEnd + 200){
+        const hy = Math.min(150, y * 0.28);
+        if(Math.abs(hy - lastHero) > 0.2){ lastHero = hy; heroBg.style.translate = `0 ${hy.toFixed(1)}px`; }
+      }
+      if(drift.length){
+        const top = colTop - y;
+        if(top + colH > -100 && top < innerHeight + 100){
+          const d = Math.max(-45, Math.min(45, ((top + colH / 2) - innerHeight / 2) * -0.09));
+          if(Math.abs(d - lastD) > 0.3){ lastD = d; drift.forEach((im, i)=>im.setAttribute("transform", `translate(0 ${(d * (0.75 + i * 0.25)).toFixed(1)})`)); }
+        }
+      }
+      if(gliding || sv !== 0 || v !== 0) requestAnimationFrame(frame); else { running = false; lastT = 0; }
+    }
+    const kick = () => { if(!running){ running = true; requestAnimationFrame(frame); } };
+    const glideTo = (t, e) => { if(!gliding){ cur = scrollY; } ease = e; target = Math.max(0, Math.min(maxY, t)); gliding = true; kick(); };
+    addEventListener("wheel", e=>{
+      if(e.ctrlKey || e.defaultPrevented || !canGlide() || document.querySelector("dialog[open]")) return;
+      if(Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;              // sideways gestures stay native
+      let dy = e.deltaY; if(e.deltaMode === 1) dy *= 16; else if(e.deltaMode === 2) dy *= innerHeight;
+      const now = performance.now(), gap = now - lastWheel; lastWheel = now;
+      // trackpads send a fast stream of small, often fractional deltas; mouse wheels send separate notches
+      const trackpad = e.deltaMode === 0 && (gap < 40 || Math.abs(dy) < 40 || dy % 1 !== 0);
+      maxY = Math.max(0, root.scrollHeight - innerHeight);
+      const base = gliding ? target : scrollY, next = Math.max(0, Math.min(maxY, base + dy));
+      if(next === base && !gliding) return;                             // resting at the very top/bottom
+      e.preventDefault();
+      glideTo(next, trackpad ? 0.34 : 0.13);
+    }, {passive:false});
+    addEventListener("keydown", e=>{
+      if(e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || !canGlide()) return;
+      if(e.target.closest && e.target.closest("input, textarea, select, button, [contenteditable], dialog")) return;
+      if(document.querySelector("dialog[open]")) return;
+      const page = innerHeight - 90, base = gliding ? target : scrollY;
+      const map = {PageDown: page, PageUp: -page, " ": e.shiftKey ? -page : page, ArrowDown: 90, ArrowUp: -90};
+      maxY = Math.max(0, root.scrollHeight - innerHeight);
+      if(e.key === "Home") { e.preventDefault(); glideTo(0, 0.12); return; }
+      if(e.key === "End")  { e.preventDefault(); glideTo(maxY, 0.12); return; }
+      if(e.key in map){ e.preventDefault(); glideTo(base + map[e.key], 0.14); }
+    });
+    document.addEventListener("click", e=>{
+      const a = e.target.closest && e.target.closest('a[href^="#"]'); if(!a || !canGlide()) return;
+      const id = a.getAttribute("href").slice(1), el = id ? document.getElementById(id) : null; if(!el) return;
+      e.preventDefault(); maxY = Math.max(0, root.scrollHeight - innerHeight);
+      glideTo(id === "top" ? 0 : el.getBoundingClientRect().top + scrollY - 64, 0.1);
+      history.replaceState(null, "", "#" + id);
+    });
+    addEventListener("scroll", ()=>{ if(gliding && Math.abs(scrollY - lastSet) > 3) gliding = false; kick(); }, {passive:true});
   })();
 
   // Toast
