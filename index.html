@@ -82,10 +82,10 @@ a{color:inherit}
 .nav{transition:transform .35s cubic-bezier(.2,.7,.3,1)}
 .nav.nav-hidden{transform:translateY(calc(-100% - env(safe-area-inset-top,0px) - 2px))}
 .nav.nav-hidden:focus-within{transform:none}
-.btn-ghost:hover .brand-word b,.btn-ghost:focus-visible .brand-word b{color:#111}
+.btn-ghost:hover .brand-word b,.btn-ghost:focus-visible .brand-word b{color:#0b8a00}
 .btn-green{background:#fff; color:#111}
 .btn-green:hover,.btn-green:focus-visible{background:var(--green); color:var(--green-ink)}
-.btn-outline-dark{background:#fff; color:#111; border-color:#111}
+.btn-outline-dark{background:transparent; color:#111; border-color:#111}
 .btn-outline-dark:hover,.btn-outline-dark:focus-visible{background:#111; color:#fff}
 .hero .cta{display:flex; gap:14px; justify-content:center; flex-wrap:wrap}
 
@@ -222,7 +222,7 @@ a{color:inherit}
 .g-open strong{font-size:.9rem; font-weight:600}
 .g-open small{font-size:.78rem}
 .g-open svg{width:34px; height:34px; stroke:#fff; fill:none; stroke-width:1.6; margin-top:10px}
-.g-open{transition:background .2s, color .2s}
+.g-open{transition:background .2s, color .2s; background:transparent}
 .g-open:hover,.g-open:focus-visible{background:#fff; color:#111}
 .g-open:hover svg path,.g-open:focus-visible svg path{fill:#111}
 
@@ -274,14 +274,22 @@ dialog::backdrop{background:rgba(0,0,0,.7)}
 .chip[aria-pressed="true"]{border-color:var(--green); background:rgba(17,255,0,.12)}
 .swatch{width:30px; height:30px; padding:0; border-radius:50%}
 .total{display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:16px; margin-top:6px}
+.cz-email{margin:4px 0 16px}
+.cz-email label{display:block; font-size:.85rem; font-weight:500; color:#bbb; margin-bottom:8px}
+.cz-email label span{color:var(--green)}
+.cz-email input{width:100%; background:#0f0f0e; color:#fff; border:1.5px solid #555; border-radius:8px; padding:10px 12px; font:400 1rem var(--body)}
+.cz-email input::placeholder{color:#777}
+.cz-email input:focus{outline:none; border-color:var(--green)}
+.cz-email input.invalid{border-color:#ff5a5a}
+.cz-email .err{color:#ff7a7a; font-size:.8rem; font-style:normal; display:block; margin-top:6px; min-height:1em}
 .total b{font-size:1.25rem}
 
 /* ---------- Figma spec (Desktop - 1, 1440 wide) ---------- */
 body{font-size:1.125rem}
 .nav ul a{font-weight:600; font-size:1.125rem}
 .logo{font-family:var(--display); font-weight:800; font-style:italic; font-size:clamp(1.4rem,2.2vw,2rem)}
-.hero{max-width:1346px; margin:17px auto 0; min-height:549px}
-.hero-inner{padding:96px 0 70px}
+.hero{max-width:1346px; margin:17px auto 0; min-height:clamp(360px, calc(100vh - 155px), 760px); min-height:clamp(360px, calc(100svh - 155px), 760px)}
+.hero-inner{padding:clamp(36px, 9vh, 96px) 0 clamp(28px, 6vh, 70px)}
 .hero h1{font-size:clamp(2.4rem,5.15vw,4.625rem); line-height:1.15}
 .hero p,.sc-copy .desc,.craft p,.feature p,.review p,.contact-form > p,.contact-info > p,.cinfo li,.specs li{font-size:clamp(1rem,1.25vw,1.125rem)}
 .hero p{max-width:640px; text-shadow:0 4px 4px rgba(0,0,0,.25)}
@@ -377,6 +385,11 @@ body{font-size:1.125rem}
 [data-reveal="below"]{opacity:0; translate:0 var(--rv-dist,40px)}
 [data-reveal="above"]{opacity:0; translate:0 calc(var(--rv-dist,40px) * -0.6)}
 [data-reveal="in"]{opacity:1; translate:0 0; transition-delay:var(--rv-delay,0s), var(--rv-delay,0s), 0s, 0s, 0s}
+/* Ride cards grow slightly on hover */
+.ride{transition:scale .35s cubic-bezier(.2,.7,.3,1)}
+.ride[data-reveal]{transition:opacity var(--rv-d,.8s) cubic-bezier(.2,.7,.3,1), translate var(--rv-d,.8s) cubic-bezier(.2,.7,.3,1), scale .35s cubic-bezier(.2,.7,.3,1)}
+.ride[data-reveal="in"]{transition-delay:var(--rv-delay,0s), var(--rv-delay,0s), 0s}
+@media (hover: hover){ .ride:hover{scale:1.04; z-index:2} }
 </style>
 </head>
 <body>
@@ -607,6 +620,11 @@ body{font-size:1.125rem}
     <div class="opt-group"><h3>Deck finish</h3><div class="chips" id="cz-finish"></div></div>
     <div class="opt-group"><h3>Battery</h3><div class="chips" id="cz-battery"></div></div>
     <div class="sc-art" style="padding:0 0 10px"><svg class="board" id="cz-preview" viewBox="0 0 600 300" style="width:100%"><use href="#board"/></svg></div>
+    <div class="cz-email">
+      <label for="cz-email">Email for your quote <span aria-hidden="true">*</span></label>
+      <input type="email" id="cz-email" placeholder="you@example.com" autocomplete="email" required aria-describedby="cz-err">
+      <em class="err" id="cz-err"></em>
+    </div>
     <div class="total"><span>Total <b id="cz-total">$1,499.99</b></span><button class="btn btn-green" id="cz-save">Save build <span class="chev">›</span></button></div>
   </div>
 </dialog>
@@ -796,7 +814,16 @@ function startSite(C){
     if(e.target.closest("[data-close]")) e.target.closest("dialog").close();
   });
   $("#sc-customize").addEventListener("click",()=>openCustomize(current));
-  $("#cz-save").addEventListener("click",()=>{ dlg.close(); toast("Build saved — we’ll follow up with a quote."); });
+  $("#cz-save").addEventListener("click",()=>{
+    const em = $("#cz-email"), err = $("#cz-err"), v = em.value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){
+      err.textContent = v ? "That email doesn’t look right — check for typos." : "Enter your email so we can send your quote.";
+      em.classList.add("invalid"); em.focus(); return;
+    }
+    err.textContent = ""; em.classList.remove("invalid");
+    dlg.close(); toast(`Build saved — we’ll email your quote to ${v}.`);
+  });
+  $("#cz-email").addEventListener("input",()=>{ $("#cz-err").textContent = ""; $("#cz-email").classList.remove("invalid"); });
   document.querySelectorAll("dialog").forEach(d=>d.addEventListener("click",e=>{ if(e.target===d) d.close(); }));
 
   // Reviews & gallery dialog
