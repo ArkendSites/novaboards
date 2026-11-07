@@ -137,12 +137,22 @@ a{color:inherit}
 .sc-art{position:relative; z-index:1; display:grid; place-items:center; padding:20px}
 .sc-art svg.board{width:min(100%,620px); height:auto; filter:drop-shadow(0 30px 30px rgba(0,0,0,.7)); transition:opacity .3s, transform .4s}
 .sc-art.swap svg.board{opacity:0; transform:translateX(30px)}
+.showcase[data-dir="next"] .sc-art.swap svg.board{transform:translateX(-30px)}
+@keyframes artInR{from{opacity:0; transform:translateX(44px)} to{opacity:1; transform:none}}
+@keyframes artInL{from{opacity:0; transform:translateX(-44px)} to{opacity:1; transform:none}}
+.showcase[data-dir="next"] .sc-art.enter svg.board{animation:artInR .55s cubic-bezier(.2,.7,.3,1) both}
+.showcase[data-dir="prev"] .sc-art.enter svg.board{animation:artInL .55s cubic-bezier(.2,.7,.3,1) both}
+.showcase{touch-action:pan-y}
 .dots{position:absolute; z-index:3; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:8px}
 .dot{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.35); border:0; padding:0; cursor:pointer}
 .dot[aria-current="true"]{background:#fff}
-.sc-copy > *{transition:opacity .25s}
+.sc-copy > *{transition:opacity .25s, transform .25s}
 .showcase.fading .sc-copy > *{opacity:0}
+.showcase.fading[data-dir="next"] .sc-copy > *{transform:translateX(-24px)}
+.showcase.fading[data-dir="prev"] .sc-copy > *{transform:translateX(24px)}
 @keyframes scIn{from{opacity:0; transform:translateX(-32px)} to{opacity:1; transform:none}}
+@keyframes scInR{from{opacity:0; transform:translateX(32px)} to{opacity:1; transform:none}}
+.showcase[data-dir="next"] .sc-copy.enter > *{animation-name:scInR}
 .sc-copy.enter > .sc-cat{animation:scIn .4s cubic-bezier(.2,.7,.3,1) both}
 .sc-copy.enter > h3{animation:scIn .45s cubic-bezier(.2,.7,.3,1) .03s both}
 .sc-copy.enter > .desc{animation:scIn .85s cubic-bezier(.2,.7,.3,1) .08s both}
@@ -754,8 +764,10 @@ function startSite(C){
   addEventListener("resize", ()=>{ bar.classList.add("no-anim"); moveBar(); requestAnimationFrame(()=>bar.classList.remove("no-anim")); });
   if(document.fonts) document.fonts.ready.then(()=>{ bar.classList.add("no-anim"); moveBar(); requestAnimationFrame(()=>bar.classList.remove("no-anim")); });
   function paint(svg, b){ svg.style.setProperty("--deck", b.deck); svg.style.setProperty("--rim", b.rim); }
-  function show(key, animate=true){
+  function show(key, animate=true, dir){
     if(!boards[key]) return;
+    if(dir === undefined){ const oi = order.indexOf(current), ni = order.indexOf(key); dir = ni >= oi ? 1 : -1; }
+    showcase.dataset.dir = dir > 0 ? "next" : "prev";
     const b = boards[key]; current = key;
     const apply = () => {
       $("#sc-cat").textContent = b.cat;
@@ -770,6 +782,7 @@ function startSite(C){
       showcase.classList.remove("fading"); art.classList.remove("swap");
       const copy = showcase.querySelector(".sc-copy");
       copy.classList.remove("enter"); void copy.offsetWidth; copy.classList.add("enter");
+      art.classList.remove("enter"); void art.offsetWidth; art.classList.add("enter");
     };
     document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.dataset.board===key));
     moveBar();
@@ -780,6 +793,15 @@ function startSite(C){
     } else apply();
   }
   document.querySelectorAll(".tab,.dot").forEach(el=>el.addEventListener("click",()=>show(el.dataset.board)));
+  const stepBoard = d => { const i = order.indexOf(current) + d; show(order[(i + order.length) % order.length], true, d); };
+  // Swipe left/right on the board panel (vertical swipes still scroll the page)
+  let swX = null, swY = 0, swT = 0;
+  showcase.addEventListener("touchstart", e=>{ if(e.touches.length !== 1){ swX = null; return; } swX = e.touches[0].clientX; swY = e.touches[0].clientY; swT = Date.now(); }, {passive:true});
+  showcase.addEventListener("touchend", e=>{
+    if(swX === null) return;
+    const t = e.changedTouches[0], dx = t.clientX - swX, dy = t.clientY - swY; swX = null;
+    if(Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4 && Date.now() - swT < 900) stepBoard(dx < 0 ? 1 : -1);
+  }, {passive:true});
   document.addEventListener("keydown", e=>{
     if(e.key!=="ArrowRight" && e.key!=="ArrowLeft") return;
     if(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -792,7 +814,7 @@ function startSite(C){
     if(!inTabs && !visible) return;
     e.preventDefault();
     const i = order.indexOf(current) + (e.key==="ArrowRight"?1:-1);
-    const k = order[(i+order.length)%order.length]; show(k);
+    const k = order[(i+order.length)%order.length]; show(k, true, e.key==="ArrowRight" ? 1 : -1);
     if(inTabs) document.querySelector(`${t.closest(".dots") ? ".dot" : ".tab"}[data-board="${k}"]`).focus();
   });
   show(current, false);
